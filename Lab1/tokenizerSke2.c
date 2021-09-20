@@ -24,11 +24,12 @@ bool non_delim_character(char c){
    space-separated word*/
 char *word_start(char* str){
 	char *start;
-	while(*str!=' '){
-		str++;
+	char *curr;
+	while(*curr!=' '){
+		curr++;
 	}
-	str++;
-	start = str;
+	curr++;
+	start = curr;
 	return start;
 }
 
@@ -36,11 +37,12 @@ char *word_start(char* str){
 terminated string*/
 char *end_word(char* str){
 	char *end;
-	while(*str!=' '){
-		str++;
+	char *curr;
+	while(*curr!=' '){
+		curr++;
 	}
-	str++;
-	end = str;
+	curr++;
+	end = curr;
 	return end;
 
 }
@@ -49,10 +51,13 @@ int count_tokens(char* str){
 	//Tokens = whitespace(n) + 1.
 	//i.e. "This is my string." 3 spaces, 4 words
 	int count = 0;
-	while(*str!='\n' && *str!='\0'){
-		if(*str==' ')
+	char *curr;
+	curr = str;
+
+	while(*curr!='\n' && *curr!='\0'){
+		if(*curr==' ')
 			count++;
-		str++;
+		curr++;
 	}
 	return count+1;
 
@@ -68,13 +73,17 @@ int count_tokens(char* str){
 char *copy_str(char *inStr, short len){
 	char *token;
 	int i=0;
+	//printf("\nLen: %d\n", len);
 	token = (char *) malloc(len*sizeof(char));
 	while(i<len){
+		//printf("Copying character: %c\n", *inStr);
 		token[i] = *inStr;
+		//printf("copy_str token: %s\n", token);
 		i++;
 		inStr++;
 	}
-	
+	token[i+1]='\0';
+	//printf("copy token: %s\n", token);
 	return token;
 		
 }
@@ -84,37 +93,31 @@ char** tokenize(char* str){
 	char *copy, *start;
 	int c, i, j, tokens;
 	tokens = count_tokens(temp);
-	char** token_store[tokens][0];
-	
+	char **token_store[tokens][0];
+	/*
+	Use a while loop using the token count.
+	while(i=0; i<tokens; i++)
+	*/
 	printf("Tokens: %d\n", tokens);
 	c=*temp;
+	start = str;
 	while(c!='\n' && c!='\0'){
 		for(i=0; *temp!=' ' && (*temp!='\n' && *temp!='\0'); i++, temp++){
-			printf("Looping because Temp = %c\n", *temp);
 		}
-		printf("i is: %d\n", i);
+		//printf("\ni is: %d\n", i);
 		copy = copy_str(start, i);
-		printf("Copied token = %c\n", *copy);
+		//printf("Copied token = %s\n", copy);
 		token_store[j][0] = copy;
+		printf("Token[%d]: %s\n", j, *(&token_store[j][0]));
 		temp++;
 		c=*temp;
 		start = temp;
 		j++;
 		
-		
 	}
-	print_all_tokens(token_store);
-	/*while(c!='\n'){
-		for(; *temp!=' '; temp++){
-			c = *temp;
-			printf("C is: %c\n", c);
-			if(delim_character(*temp)==1){
-				printf("Delim found!");
-			}
-		}
-		temp++;
-		c = *temp;		
-	}*/
+	//for(i=0; i<tokens; i++)
+	//	printf("Token[%d]: %s\n", i, *(&token_store[i][0]));
+	return token_store;
 }
 
 
@@ -128,7 +131,7 @@ int main(){
 	printf("Enter a string. Limit 20 characters.\n$");
 	fgets(mystring, MAXLINE, stdin);
 	
-	strptr = &mystring;
+	strptr = mystring;
 	printf("String: %s\n", mystring);
 	tokenize(strptr);
 	
