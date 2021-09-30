@@ -2,8 +2,10 @@
 #include <stdbool.h>
 #include <stdlib.h> // malloc & free
 #include <stdint.h> // use guaranteed 64-bit integers
-#include "tokenizer.h" // Create header file and reference that
+// #include "tokenizer.h" // Create header file and reference that
 #include "memory.h" // built-in functions to read and write to a specific file
+#include <strings.h> //For fgets and strtok functions
+#include <string.h> //For strtok
 
 int32_t* reg; // Array of 32 32-bit registers
 
@@ -24,13 +26,20 @@ void init_regs(){
 }
 
 
-
 /**
  * Fill out this function and use it to read interpret user input to execute RV64 instructions.
  * You may expect that a single, properly formatted RISC-V instruction string will be passed
  * as a parameter to this function.
  */
 bool interpret(char* instr){
+	printf("In interpret function.\n");
+	char* token = strtok(instr, " ");
+	//Get tokens
+	printf("Got first token: %s\n", token);
+	while(token!=NULL){
+		printf("%s\n", token);
+		token=strtok(NULL, " ");
+	}
 	return true;
 }
 
@@ -59,12 +68,20 @@ void write_read_demo(){
  * Your code goes in the main
  *
  */
+
 int main(){
 	// Do not write any code between init_regs
 	init_regs(); // DO NOT REMOVE THIS LINE
 
 	// Below is a sample program to a write-read. Overwrite this with your own code.
 	write_read_demo();
+	
+	char instructions[50];
+	int c;
+	printf("\nEnter your RISC-V Instructions.\nEnter instructions in ALL CAPITAL LETTERS.\nUse spaces between parameters.\nSubmit an EOF character to exit.\n$");
+	fgets(instructions, 50, stdin);
+	printf("Your instruction: %s\n", instructions);
+	interpret(instructions);
 
 	return 0;
 }
