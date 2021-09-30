@@ -24,7 +24,26 @@ void init_regs(){
 	for(int i = 0; i < 32; i++)
 		reg[i] = i;
 }
-
+bool string_compare(char* tok, char* instr){
+	while(*tok!='\0' && *instr!='\0'){
+		//Current characters match, move to next character in string
+		if(*tok == *instr){
+			tok++;
+			instr++;
+		}
+		else if(*tok!=*instr){
+			return false;
+		}
+		//Strings are not equal, return false
+		else if(*tok == '\0' && *instr!='\0'){
+			return false;
+		}
+		else if(*tok!='\0' && *instr=='\0'){
+			return false;
+		}
+	}
+	return true;
+}
 
 /**
  * Fill out this function and use it to read interpret user input to execute RV64 instructions.
@@ -32,12 +51,29 @@ void init_regs(){
  * as a parameter to this function.
  */
 bool interpret(char* instr){
-	printf("In interpret function.\n");
+	//Get first token
 	char* token = strtok(instr, " ");
-	//Get tokens
-	printf("Got first token: %s\n", token);
+	//Loop through tokens
 	while(token!=NULL){
-		printf("%s\n", token);
+		//Instructions: Load (LW), Add (ADD), Add Immediate (ADDI), Store (SW)
+		if(string_compare(token, "LW")){
+			printf("First token is LW for load word.\n");
+			printf("Reading address: %x\n", read_address(0x5, "mem.txt"));
+		}
+		else if(string_compare(token, "ADD")){
+			printf("First token is ADD for addition\n");
+		}
+		else if(string_compare(token, "ADDI")){
+			printf("First token is ADDI for add immediate\n");
+		}
+		else if(string_compare(token, "SW")){
+			printf("First token is SW for store word.\n");
+		}
+		else{
+			//Instructions do not match, return false.
+			printf("Invalid instruction.\n");
+			return false;
+		}
 		token=strtok(NULL, " ");
 	}
 	return true;
