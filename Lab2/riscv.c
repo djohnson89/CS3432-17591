@@ -66,15 +66,20 @@ void store_word(){
 
 }
 
-void add(char* dest, char* src, int n){
-
+void add(int dest, int src_1, int src_2){
+	int32_t line_address = dest * 4;
+	int data = reg[src_1] + reg[src_2];
+	reg[dest] = data;
+	write_address(reg[dest], line_address, "mem.txt");
 }
 
 void addi(int dest, int src, int n){
+	int32_t line_address = dest * 4;
 	printf("reg[src] is: %d\n", reg[src]);
 	n = reg[src] + n;
 	printf("N is: %d, reg[src] is: %d\n", n, reg[src]);
 	reg[dest] = n;
+	write_address(reg[dest], line_address, "mem.txt");
 }
 void print_reg(){
 	int column = 10;
@@ -84,6 +89,7 @@ void print_reg(){
 		printf("X%02i:%.*lld\t", i+16, column, (long long int) reg[i+16]);
 		printf("X%02i:%.*lld\n", i+24, column, (long long int) reg[i+24]);
 	}
+	printf("\n");
 }
 
 /**
@@ -92,6 +98,7 @@ void print_reg(){
  * as a parameter to this function.
  */
 bool interpret(char* instr){
+	printf("Instruction: %s\n", instr);
 	//Get first token
 	char* token = strtok(instr, " ");
 	//variables for registers and data
@@ -112,15 +119,17 @@ bool interpret(char* instr){
 		}
 		else if(string_compare(token, "ADD")){
 			printf("First token is ADD for addition\n");
+			reg_1=strtoint(strtok(NULL, " "));
+			reg_2=strtoint(strtok(NULL, " "));
+			reg_3=strtoint(strtok(NULL, " "));
+			add(reg_1, reg_2, reg_3);
+			return true;
+			
 		}
 		else if(string_compare(token, "ADDI")){
-			printf("First token is ADDI for add immediate\n");
-			token=strtok(NULL, " ");
-			reg_1 = strtoint(token);
-			token=strtok(NULL, " ");
-			reg_2 = strtoint(token);
-			token=strtok(NULL, " ");
-			data = strtoint(token);
+			reg_1 = strtoint(strtok(NULL, " "));
+			reg_2 = strtoint(strtok(NULL, " "));
+			data = strtoint(strtok(NULL, " "));
 			/*data = read_address(reg_2, "mem.txt");
 			data = data + reg_3;
 			write_address(data, reg_1, "mem.txt");
@@ -178,11 +187,13 @@ int main(){
 	write_read_demo();
 	
 	char instructions[50];
+	bool finished = false;
 	printf("\nEnter your RISC-V Instructions.\nEnter instructions in ALL CAPITAL LETTERS.\nUse spaces between parameters.\nSubmit an EOF character to exit.\n$");
+	do{
 	fgets(instructions, 50, stdin);
-	printf("Your instruction: %s\n", instructions);
 	interpret(instructions);
 	print_reg();
+	}while(!finished);
 
 	return 0;
 }
