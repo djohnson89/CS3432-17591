@@ -42,7 +42,48 @@ bool string_compare(char* tok, char* instr){
 			return false;
 		}
 	}
-	return true;
+	//Final Check for instructions matching
+	if(*tok==*instr) return true;
+	else return false;
+}
+
+int strtoint(char* s){
+	int i, n;
+	n = 0;
+	//Move past X character in the token
+	if(*s=='X') s++;
+	for(;*s>='0' && *s<='9'; s++){
+		n = 10 * n + (*s - '0');
+	}
+	//Return register multiplied by 4 for byte compensation
+	return n;
+}
+void load_word(char* dest, char* src){
+	
+}
+
+void store_word(){
+
+}
+
+void add(char* dest, char* src, int n){
+
+}
+
+void addi(int dest, int src, int n){
+	printf("reg[src] is: %d\n", reg[src]);
+	n = reg[src] + n;
+	printf("N is: %d, reg[src] is: %d\n", n, reg[src]);
+	reg[dest] = n;
+}
+void print_reg(){
+	int column = 10;
+	for(int i=0; i<8; i++){
+		printf("X%02i:%.*lld\t", i ,column, (long long int) reg[i]);
+		printf("X%02i:%.*lld\t", i+8, column, (long long int) reg[i+8]);
+		printf("X%02i:%.*lld\t", i+16, column, (long long int) reg[i+16]);
+		printf("X%02i:%.*lld\n", i+24, column, (long long int) reg[i+24]);
+	}
 }
 
 /**
@@ -53,29 +94,53 @@ bool string_compare(char* tok, char* instr){
 bool interpret(char* instr){
 	//Get first token
 	char* token = strtok(instr, " ");
+	//variables for registers and data
+	int32_t reg_1, reg_2, reg_3, data;
 	//Loop through tokens
 	while(token!=NULL){
 		//Instructions: Load (LW), Add (ADD), Add Immediate (ADDI), Store (SW)
 		if(string_compare(token, "LW")){
-			printf("First token is LW for load word.\n");
-			printf("Reading address: %x\n", read_address(0x5, "mem.txt"));
+			token=strtok(NULL, " ");
+			reg_1 = strtoint(token);
+			printf("reg_1: %d\n", reg_1);
+			token=strtok(NULL, " ");
+			reg_2 = strtoint(token);
+			printf("reg_2: %d\n", reg_2);
+			data = read_address(reg_2, "mem.txt");
+			write_address(data, reg_1, "mem.txt");
+			return true;
 		}
 		else if(string_compare(token, "ADD")){
 			printf("First token is ADD for addition\n");
 		}
 		else if(string_compare(token, "ADDI")){
 			printf("First token is ADDI for add immediate\n");
+			token=strtok(NULL, " ");
+			reg_1 = strtoint(token);
+			token=strtok(NULL, " ");
+			reg_2 = strtoint(token);
+			token=strtok(NULL, " ");
+			data = strtoint(token);
+			/*data = read_address(reg_2, "mem.txt");
+			data = data + reg_3;
+			write_address(data, reg_1, "mem.txt");
+			*/
+			printf("reg_1 is: %d, reg_2 is: %d\n", reg_1, reg_2);
+			addi(reg_1, reg_2, data);
+			return true;
 		}
 		else if(string_compare(token, "SW")){
 			printf("First token is SW for store word.\n");
+
 		}
 		else{
 			//Instructions do not match, return false.
 			printf("Invalid instruction.\n");
 			return false;
 		}
-		token=strtok(NULL, " ");
 	}
+	//Print line of mem.txt
+	print_reg();
 	return true;
 }
 
@@ -113,11 +178,11 @@ int main(){
 	write_read_demo();
 	
 	char instructions[50];
-	int c;
 	printf("\nEnter your RISC-V Instructions.\nEnter instructions in ALL CAPITAL LETTERS.\nUse spaces between parameters.\nSubmit an EOF character to exit.\n$");
 	fgets(instructions, 50, stdin);
 	printf("Your instruction: %s\n", instructions);
 	interpret(instructions);
+	print_reg();
 
 	return 0;
 }
