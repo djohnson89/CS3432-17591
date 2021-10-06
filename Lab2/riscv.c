@@ -24,6 +24,7 @@ void init_regs(){
 	for(int i = 0; i < 32; i++)
 		reg[i] = i;
 }
+//Stirng_Compare to find which instruction to execute
 bool string_compare(char* tok, char* instr){
 	while(*tok!='\0' && *instr!='\0'){
 		//Current characters match, move to next character in string
@@ -43,43 +44,65 @@ bool string_compare(char* tok, char* instr){
 		}
 	}
 	//Final Check for instructions matching
+	//Case for differentiating between ADD and ADDI
 	if(*tok==*instr) return true;
 	else return false;
 }
 
 int strtoint(char* s){
-	int i, n;
+	int n;
+	bool is_negative = false;
 	n = 0;
 	//Move past X character in the token
 	if(*s=='X') s++;
+	//Check for negative number
+	if (*s=='-'){
+		is_negative = true;
+		s++;
+	}
 	for(;*s>='0' && *s<='9'; s++){
 		n = 10 * n + (*s - '0');
 	}
-	//Return register multiplied by 4 for byte compensation
+	//Return positive or negative depending on if '-' was present
+	if(is_negative) return n*-1;
 	return n;
 }
-void load_word(char* dest, char* src){
+/*Load and Store Word should add the value the register to the offset 
+  stored in mem.txt, according to Esteban
+*/
+void load_word(int rd, int offset, int rs1){
+	int32_t address = offset * 4;
+	int32_t data = reg[rs1] + read_address(address, "mem.txt");
+	reg[rd] = data;
 	
 }
-
-void store_word(){
-
+//SW X1 5(X2) - X1 has the value being stored and 5 is the line in mem.txt to write to.
+void store_word(int dest, int offset, int src){
+	int32_t address = offset * 4;
+	int32_t data = reg[dest];
+	write_address(data, address, "mem.txt");
 }
 
 void add(int dest, int src_1, int src_2){
-	int32_t line_address = dest * 4;
 	int data = reg[src_1] + reg[src_2];
 	reg[dest] = data;
-	write_address(reg[dest], line_address, "mem.txt");
 }
 
 void addi(int dest, int src, int n){
-	int32_t line_address = dest * 4;
-	printf("reg[src] is: %d\n", reg[src]);
 	n = reg[src] + n;
-	printf("N is: %d, reg[src] is: %d\n", n, reg[src]);
 	reg[dest] = n;
-	write_address(reg[dest], line_address, "mem.txt");
+}
+
+void and(int rd, int rs1, int rs2){
+	reg[rd] = rs1 & rs2;
+}
+
+void or(int rd, int rs1, int rs2){
+	reg[rd] = rs1 | rs2;
+}
+
+void xor(int rd, int rs1, int rs2){
+	reg[rd] = rs1 ^ rs2;
 }
 void print_reg(){
 	int column = 10;
@@ -102,23 +125,20 @@ bool interpret(char* instr){
 	//Get first token
 	char* token = strtok(instr, " ");
 	//variables for registers and data
-	int32_t reg_1, reg_2, reg_3, data;
+	int32_t reg_1, reg_2, reg_3; //Registers
+	int32_t i, offset; //i for ADDI, offset for LW and SW
 	//Loop through tokens
 	while(token!=NULL){
 		//Instructions: Load (LW), Add (ADD), Add Immediate (ADDI), Store (SW)
-		if(string_compare(token, "LW")){
-			token=strtok(NULL, " ");
-			reg_1 = strtoint(token);
-			printf("reg_1: %d\n", reg_1);
-			token=strtok(NULL, " ");
-			reg_2 = strtoint(token);
-			printf("reg_2: %d\n", reg_2);
-			data = read_address(reg_2, "mem.txt");
-			write_address(data, reg_1, "mem.txt");
+		//Assuming convention of LW Xn1 offset(Xn2)
+		if(string_compare(token, "LW")){ //Load Word
+			reg_1 = strtoint(strtok(NULL, " ")); // Destination Register
+			offset = strtoint(strtok(NULL, "(")); // Offset
+			reg_2 = strtoint(strtok(NULL, ")")); //Source register
+			load_word(reg_1, offset, reg_2);
 			return true;
 		}
-		else if(string_compare(token, "ADD")){
-			printf("First token is ADD for addition\n");
+		else if(string_compare(token, "ADD")){ //Add
 			reg_1=strtoint(strtok(NULL, " "));
 			reg_2=strtoint(strtok(NULL, " "));
 			reg_3=strtoint(strtok(NULL, " "));
@@ -126,30 +146,51 @@ bool interpret(char* instr){
 			return true;
 			
 		}
-		else if(string_compare(token, "ADDI")){
+		else if(string_compare(token, "ADDI")){ //Add immediate
 			reg_1 = strtoint(strtok(NULL, " "));
 			reg_2 = strtoint(strtok(NULL, " "));
-			data = strtoint(strtok(NULL, " "));
-			/*data = read_address(reg_2, "mem.txt");
-			data = data + reg_3;
-			write_address(data, reg_1, "mem.txt");
-			*/
-			printf("reg_1 is: %d, reg_2 is: %d\n", reg_1, reg_2);
-			addi(reg_1, reg_2, data);
+			i = strtoint(strtok(NULL, " "));
+			addi(reg_1, reg_2, i);
 			return true;
 		}
-		else if(string_compare(token, "SW")){
-			printf("First token is SW for store word.\n");
+		//Assuming convention of LW Xn1 offset(Xn2)
+		else if(string_compare(token, "SW")){ // Store word
+			reg_1 = strtoint(strtok(NULL, " "));
+			offset = strtoint(strtok(NULL, "(")); // Offset
+			reg_2 = strtoint(strtok(NULL, ")")); 
+			store_word(reg_1, offset, reg_2);
+			return true;
 
+		}
+		//Extra Credit Functions, AND OR XOR
+		else if(string_compare(token, "AND")){
+			reg_1 = strtoint(strtok(NULL, " "));
+			reg_2 = strtoint(strtok(NULL, " "));
+			reg_3 = strtoint(strtok(NULL, " "));
+			and(reg_1, reg_2, reg_3);
+			return true;	
+		}
+		else if(string_compare(token, "OR")){
+			reg_1 = strtoint(strtok(NULL, " "));
+			reg_2 = strtoint(strtok(NULL, " "));
+			reg_3 = strtoint(strtok(NULL, " "));
+			or(reg_1, reg_2, reg_3);
+			return true;
+		}
+		else if(string_compare(token, "XOR")){
+			reg_1 = strtoint(strtok(NULL, " "));
+			reg_2 = strtoint(strtok(NULL, " "));
+			reg_3 = strtoint(strtok(NULL, " "));
+			xor(reg_1, reg_2, reg_3);
+			return true;
 		}
 		else{
 			//Instructions do not match, return false.
 			printf("Invalid instruction.\n");
 			return false;
 		}
+		token=strtok(NULL, " ");
 	}
-	//Print line of mem.txt
-	print_reg();
 	return true;
 }
 
@@ -184,16 +225,20 @@ int main(){
 	init_regs(); // DO NOT REMOVE THIS LINE
 
 	// Below is a sample program to a write-read. Overwrite this with your own code.
-	write_read_demo();
+	//write_read_demo();
 	
-	char instructions[50];
-	bool finished = false;
-	printf("\nEnter your RISC-V Instructions.\nEnter instructions in ALL CAPITAL LETTERS.\nUse spaces between parameters.\nSubmit an EOF character to exit.\n$");
-	do{
-	fgets(instructions, 50, stdin);
-	interpret(instructions);
-	print_reg();
-	}while(!finished);
+	char* instruction = malloc(1000 * sizeof(char));
+	bool is_null = false;
+	printf(" RV32 Interpreter.\nType RV32 instructions. Use upper-case letters and space as a delimiter.\nEnter 'EOF' character to end program\n");
+	is_null = fgets(instruction, 1000, stdin) == NULL;
+	while(!is_null){
+		interpret(instruction);
+		printf("\n");
+		print_reg();
+		printf("\n");
+		is_null = fgets(instruction, 1000, stdin) == NULL;
+	}
+
 
 	return 0;
 }
