@@ -67,30 +67,29 @@ int strtoint(char* s){
 	if(is_negative) return n*-1;
 	return n;
 }
-/*Load and Store Word should add the value the register to the offset 
-  stored in mem.txt, according to Esteban
-*/
+
 void load_word(int rd, int offset, int rs1){
-	int32_t address = offset * 4;
-	int32_t data = reg[rs1] + read_address(address, "mem.txt");
+	//Address in memory.c is address / 2
+	int32_t address = offset * 2;
+	int32_t data = read_address(address, "mem.txt");
 	reg[rd] = data;
 	
 }
 //SW X1 5(X2) - X1 has the value being stored and 5 is the line in mem.txt to write to.
-void store_word(int dest, int offset, int src){
-	int32_t address = offset * 4;
-	int32_t data = reg[dest];
+void store_word(int rd, int offset, int rs1){
+	//Address in memory.c is address / 2
+	int32_t address = offset * 2;
+	int32_t data = reg[rd];
 	write_address(data, address, "mem.txt");
 }
 
-void add(int dest, int src_1, int src_2){
-	int data = reg[src_1] + reg[src_2];
-	reg[dest] = data;
+void add(int rd, int rs1, int rs2){
+	reg[rd] = reg[rs1] + reg[rs2];
 }
 
-void addi(int dest, int src, int n){
-	n = reg[src] + n;
-	reg[dest] = n;
+void addi(int rd, int rs1, int n){
+	n = reg[rs1] + n;
+	reg[rd] = n;
 }
 
 void and(int rd, int rs1, int rs2){
@@ -112,7 +111,6 @@ void print_reg(){
 		printf("X%02i:%.*lld\t", i+16, column, (long long int) reg[i+16]);
 		printf("X%02i:%.*lld\n", i+24, column, (long long int) reg[i+24]);
 	}
-	printf("\n");
 }
 
 /**
@@ -121,12 +119,11 @@ void print_reg(){
  * as a parameter to this function.
  */
 bool interpret(char* instr){
-	printf("Instruction: %s\n", instr);
 	//Get first token
 	char* token = strtok(instr, " ");
 	//variables for registers and data
 	int32_t reg_1, reg_2, reg_3; //Registers
-	int32_t i, offset; //i for ADDI, offset for LW and SW
+	int32_t imm, offset; //imm for ADDI, offset for LW and SW
 	//Loop through tokens
 	while(token!=NULL){
 		//Instructions: Load (LW), Add (ADD), Add Immediate (ADDI), Store (SW)
@@ -149,8 +146,8 @@ bool interpret(char* instr){
 		else if(string_compare(token, "ADDI")){ //Add immediate
 			reg_1 = strtoint(strtok(NULL, " "));
 			reg_2 = strtoint(strtok(NULL, " "));
-			i = strtoint(strtok(NULL, " "));
-			addi(reg_1, reg_2, i);
+			imm = strtoint(strtok(NULL, " "));
+			addi(reg_1, reg_2, imm);
 			return true;
 		}
 		//Assuming convention of LW Xn1 offset(Xn2)
@@ -201,7 +198,7 @@ bool interpret(char* instr){
  * Feel free to change "data_to_write" and "address" variables to see how these affect mem.txt
  * Use 0x before an int in C to hardcode it as text, but you may enter base 10 as you see fit.
  */
-void write_read_demo(){
+/*void write_read_demo(){
 	int32_t data_to_write = 0xFFF; // equal to 4095
 	int32_t address = 0x98; // equal to 152
 	char* mem_file = "mem.txt";
@@ -214,7 +211,7 @@ void write_read_demo(){
 
 	printf("Read address %lu (0x%lX): %lu (0x%lX)\n", address, address, read, read); // %lu -> format as an long-unsigned
 }
-
+*/
 /**
  * Your code goes in the main
  *
